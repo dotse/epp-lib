@@ -49,6 +49,6 @@ func TestStatusTextExist(t *testing.T) {
 	}
 
 	for _, code := range codes {
-		assert.NotEqual((t), "", CodeText(code), fmt.Sprintf("Code: %d does not have a status text", code))
+		assert.NotEqual((t), "", StatusText(code), fmt.Sprintf("Code: %d does not have a status text", code))
 	}
 }
