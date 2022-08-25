@@ -16,11 +16,11 @@ func TestNamespace(t *testing.T) {
 
 	for s, ns := range stringToNamespaceMap {
 		assert.Equal(t, s, namespaceToStringMap[ns])
-		assert.Equal(t, ns, FromString(s))
+		assert.Equal(t, ns, NamespaceFromString(s))
 	}
 
 	assert.Equal(t, "", NamespaceUnknown.String())
-	assert.Equal(t, NamespaceUnknown, FromString("unknown namespace"))
+	assert.Equal(t, NamespaceUnknown, NamespaceFromString("unknown namespace"))
 }
 
 func TestNamespace_Types(t *testing.T) {

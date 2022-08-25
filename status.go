@@ -85,7 +85,7 @@ var codeText = map[int]string{
 	StatusSessionLimitExceededClosingConnection: "Session limit exceeded; server closing connection",
 }
 
-// CodeText returns the EPP status text for the status code.
-func CodeText(code int) string {
+// StatusText returns the EPP status text for the status code.
+func StatusText(code int) string {
 	return codeText[code]
 }

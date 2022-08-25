@@ -57,9 +57,9 @@ var (
 	}
 )
 
-// FromString return a namespace from a given string.
+// NamespaceFromString return a namespace from a given string.
 // If the namespace is not supported NamespaceUnknown will be returned.
-func FromString(ns string) Namespace {
+func NamespaceFromString(ns string) Namespace {
 	ret, ok := stringToNamespaceMap[ns]
 	if !ok {
 		return NamespaceUnknown

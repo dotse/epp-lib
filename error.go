@@ -18,8 +18,8 @@ type ExtValue struct {
 	Reason    string
 }
 
-// Error represent the data needed for an EPP error.
-type Error struct {
+// EppError represent the data needed for an EPP error.
+type EppError struct {
 	Code      int
 	Message   string
 	Values    []Value
@@ -27,26 +27,26 @@ type Error struct {
 }
 
 // Error implements the error interface.
-func (err *Error) Error() string {
+func (err *EppError) Error() string {
 	return fmt.Sprintf("%d: %s", err.Code, err.Message)
 }
 
 // NewError create a new Error.
-func NewError(code int) *Error {
-	return &Error{
+func NewError(code int) *EppError {
+	return &EppError{
 		Code:    code,
-		Message: CodeText(code),
+		Message: StatusText(code),
 	}
 }
 
 // WithExtValues add extvalue data to the error.
-func (err *Error) WithExtValues(extValue ...ExtValue) *Error {
+func (err *EppError) WithExtValues(extValue ...ExtValue) *EppError {
 	err.ExtValues = append(err.ExtValues, extValue...)
 	return err
 }
 
 // WithValues add value data to the error.
-func (err *Error) WithValues(value ...Value) *Error {
+func (err *EppError) WithValues(value ...Value) *EppError {
 	err.Values = append(err.Values, value...)
 	return err
 }
