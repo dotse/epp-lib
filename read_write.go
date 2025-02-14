@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math"
-
-	pkgerrors "github.com/pkg/errors"
 )
 
 // ErrMessageSize represent an error where the incoming message size is bigger than allowed.
@@ -31,7 +30,7 @@ func MessageReader(r io.Reader, msgLimit int64) (io.Reader, error) {
 	messageSize := int64(totalSize - uint32(binary.Size(totalSize)))
 
 	if messageSize <= 0 || (msgLimit != 0 && messageSize > msgLimit) {
-		return nil, pkgerrors.Wrapf(ErrMessageSize, "incoming message size %d", messageSize)
+		return nil, fmt.Errorf("%w: incoming message size %d", ErrMessageSize, messageSize)
 	}
 
 	// Since we know the message size of the future message we can create a

@@ -23,7 +23,6 @@ server := &Server{
     IdleTimeout:    350 * time.Second,
     WriteTimeout:   2 * time.Minute,
     ReadTimeout:    10 * time.Second,
-    ErrorLog:       log, // whichever log you prefer that fit the interface
     MaxMessageSize: 1000,
 }
 

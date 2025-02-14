@@ -3,6 +3,7 @@ package epplib
 import (
 	"context"
 	"io"
+	"log/slog"
 
 	"github.com/beevik/etree"
 )
@@ -11,8 +12,6 @@ import (
 type CommandMux struct {
 	greetingCommand CommandFunc
 	handlers        []handler
-
-	Logger Logger
 }
 
 // GetGreeting returns a greeting.
@@ -27,7 +26,10 @@ func (c *CommandMux) Handle(ctx context.Context, rw *ResponseWriter, cmd io.Read
 
 	_, err := doc.ReadFrom(cmd)
 	if err != nil {
-		c.Logger.Infof("could not read command, err: %s", err)
+		slog.InfoContext(ctx, "could not read command",
+			slog.Any("err", err),
+		)
+
 		rw.CloseAfterWrite()
 
 		return
@@ -40,7 +42,7 @@ func (c *CommandMux) Handle(ctx context.Context, rw *ResponseWriter, cmd io.Read
 		}
 	}
 
-	c.Logger.Infof("unknown command")
+	slog.InfoContext(ctx, "unknown command")
 	rw.CloseAfterWrite()
 }
 
