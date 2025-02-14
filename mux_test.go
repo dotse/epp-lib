@@ -32,9 +32,7 @@ func TestMux_Handle(t *testing.T) {
 		barCalled bool
 	)
 
-	cm := &CommandMux{
-		Logger: &DummyLogger{},
-	}
+	cm := &CommandMux{}
 
 	cm.Bind(
 		"//foo[namespace-uri()='urn:ietf:params:xml:ns:epp-1.0']",

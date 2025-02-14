@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -55,7 +55,7 @@ type Server struct {
 
 	// Logger logs errors when accepting connections, unexpected behavior
 	// from handlers and underlying connection errors.
-	Logger Logger
+	Logger *slog.Logger
 
 	// We keep track of our active connections here. This is guarded by mu.
 	activeConn map[*eppConn]struct{}
@@ -76,6 +76,10 @@ type Server struct {
 func (s *Server) Serve(listener Listener) error {
 	if s.HandleCommand == nil || s.Greeting == nil {
 		panic("Handler and Greeting is required")
+	}
+
+	if s.Logger == nil {
+		s.Logger = slog.Default()
 	}
 
 	s.listenerMu.Lock()
@@ -184,13 +188,19 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	err := setDeadlines(c.conn, s.ReadTimeout, s.WriteTimeout)
 	if err != nil {
-		s.logError("handshake deadlines", err)
+		s.Logger.ErrorContext(ctx, "failed to set handshake deadlines",
+			slog.Any("error", err),
+		)
+
 		return
 	}
 
 	err = tlsConn.Handshake()
 	if err != nil {
-		s.logDebug("handshake", err)
+		s.Logger.DebugContext(ctx, "handshake failed",
+			slog.Any("error", err),
+		)
+
 		return
 	}
 
@@ -210,7 +220,10 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	err = setDeadlines(c.conn, s.ReadTimeout, s.WriteTimeout)
 	if err != nil {
-		s.logError("set deadlines for greeting", err)
+		s.Logger.ErrorContext(ctx, "failed to set greeting deadlines",
+			slog.Any("error", err),
+		)
+
 		return
 	}
 
@@ -219,7 +232,9 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	err = rw.FlushTo(c.conn)
 	if err != nil {
-		s.logError("flush greeting", err)
+		s.Logger.ErrorContext(ctx, "failed to flush greeting",
+			slog.Any("error", err),
+		)
 		return
 	}
 
@@ -237,7 +252,10 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		err := c.conn.SetDeadline(deadline)
 		if err != nil {
-			s.logError("set deadlines for await message", err)
+			s.Logger.ErrorContext(ctx, "failed to set deadlines for await message",
+				slog.Any("error", err),
+			)
+
 			return
 		}
 
@@ -264,15 +282,18 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 
 			if errors.Is(err, io.ErrUnexpectedEOF) {
-				// We don't want to turn this of entirely
-				s.logInfo("await message", err)
+				// We don't want to turn this off entirely
+				s.Logger.InfoContext(ctx, "await message failed, unexpected EOF")
 				return
 			}
 
 			if errors.Is(err, ErrMessageSize) {
 				// Client has told us that the incoming message is larger than
 				// our supported max size of a message.
-				s.logInfo(fmt.Sprintf("Message limit exceeded from %q", c.conn.RemoteAddr()), err)
+				s.Logger.InfoContext(ctx, "await message failed, size limit exceeded",
+					slog.Any("error", err),
+					slog.String("remote_addr", c.conn.RemoteAddr().String()),
+				)
 
 				return
 			}
@@ -284,19 +305,28 @@ func (s *Server) serveConn(conn net.Conn) {
 				// handshake is complete, just closing the connection by sending a
 				// close_notify is more appropriate.  This alert should be followed
 				// by a close_notify.  This message is generally a warning.
-				s.logInfo(fmt.Sprintf("handshake was canceled by client %q", c.conn.RemoteAddr()), err)
+				s.Logger.InfoContext(ctx, "await message failed, handshake was canceled by client",
+					slog.Any("error", err),
+					slog.String("remote_addr", c.conn.RemoteAddr().String()),
+				)
 				return
 			}
 
 			// We have some other error
-			s.logError(fmt.Sprintf("await message from %q", c.conn.RemoteAddr()), err)
+			slog.ErrorContext(ctx, "await message failed",
+				slog.Any("error", err),
+				slog.String("remote_addr", c.conn.RemoteAddr().String()),
+			)
 
 			return
 		}
 
 		err = setDeadlines(c.conn, s.ReadTimeout, s.WriteTimeout)
 		if err != nil {
-			s.logError("set deadlines for command read/write", err)
+			s.Logger.ErrorContext(ctx, "failed to set deadlines for command read/write",
+				slog.Any("error", err),
+			)
+
 			return
 		}
 
@@ -308,7 +338,11 @@ func (s *Server) serveConn(conn net.Conn) {
 		if err != nil {
 			if errors.Is(err, syscall.EPIPE) {
 				// The client has closed the connection. I.e. "broken pipe".
-				s.logInfo("flush response", err)
+				s.Logger.InfoContext(ctx,
+					"failed to flush response, client has closed connection, broken pipe",
+					slog.Any("error", err),
+				)
+
 				return
 			}
 
@@ -317,11 +351,17 @@ func (s *Server) serveConn(conn net.Conn) {
 				// Wierdly enough this is not caught by a errors.Is(err, sycall.ECONNRESET)
 				// like is done above in awaitMessage. Therefore we will info log here in-
 				// case catch to broadly here.
-				s.logInfo("flush response", err)
+				s.Logger.InfoContext(
+					ctx,
+					"failed to flush response, client has closed connection, connection reset by peer",
+					slog.Any("error", err),
+				)
 				return
 			}
 
-			s.logError("flush response", err)
+			s.Logger.InfoContext(ctx, "failed to flush response",
+				slog.Any("error", err),
+			)
 
 			return
 		}
@@ -347,24 +387,6 @@ func (s *Server) CloseConnection(conn *tls.Conn) error {
 	}
 
 	return nil
-}
-
-func (s *Server) logError(prefix string, err error) {
-	if s.Logger != nil {
-		s.Logger.Errorf("epp: %s: %+v", prefix, err)
-	}
-}
-
-func (s *Server) logInfo(prefix string, err error) {
-	if s.Logger != nil {
-		s.Logger.Infof("epp: %s: %+v", prefix, err)
-	}
-}
-
-func (s *Server) logDebug(prefix string, err error) {
-	if s.Logger != nil {
-		s.Logger.Debugf("epp: %s: %v", prefix, err)
-	}
 }
 
 func setDeadlines(conn net.Conn, readTimeout, writeTimeout time.Duration) error {

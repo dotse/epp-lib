@@ -50,7 +50,6 @@ func TestListenAndServeClose(t *testing.T) {
 	s := Server{
 		HandleCommand: func(ctx context.Context, rw *ResponseWriter, cmd io.Reader) {},
 		Greeting:      func(ctx context.Context, rw *ResponseWriter) {},
-		Logger:        &DummyLogger{},
 		TLSConfig: tls.Config{
 			InsecureSkipVerify: true,
 			Certificates:       []tls.Certificate{generateCertificate()},
