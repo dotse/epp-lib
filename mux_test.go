@@ -113,12 +113,15 @@ func TestMux_Bind(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cm := &CommandMux{}
+
 			if tc.wantPanic {
 				assert.Panics(t, func() {
 					cm.Bind(tc.path, tc.handler)
 				})
+
 				return
 			}
+
 			cm.Bind(tc.path, tc.handler)
 			assert.Equal(t, len(cm.handlers), tc.wantLength)
 		})
