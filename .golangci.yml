@@ -1,0 +1,74 @@
+---
+linters-settings:
+  stylecheck:
+    # STxxxx checks in https://staticcheck.io/docs/configuration/options/#checks
+    # ST1000 Incorrect or missing package comment.
+    checks: ["all", "-ST1000"]
+  misspell:
+    locale: US
+  gci:
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - localmodule # Local module section: contains all local packages. This section is not present unless explicitly enabled.
+
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - errcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - gci
+    - gocritic
+    - godox
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nolintlint
+    - predeclared
+    - reassign
+    - sloglint
+    - staticcheck
+    - stylecheck
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - wsl
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: '_test\.go'
+      linters:
+        - errcheck
+
+    # TLS is not needed in tests.
+    - text: "G402: TLS InsecureSkipVerify set true"
+      path: '_test\.go'
+      linters:
+        - gosec
+
+    # Ignoring errors of .Close() is ok.
+    - text: "Error return value of `.*\\.Close` is not checked"
+      linters:
+        - errcheck
+
+    # Unhandled errors are checked by errcheck.
+    - text: G104
+      linters:
+        - gosec
+
+  # Ensure that we can see all issues at once.
+  max-issues-per-linter: 0
+  max-same-issues: 0

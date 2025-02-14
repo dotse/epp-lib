@@ -51,7 +51,7 @@ type Server struct {
 
 	// MaxMessageSize if set will return an error if the incoming request
 	// is bigger than the set size in bytes. 0 indicates no limit.
-	MaxMessageSize int64
+	MaxMessageSize uint32
 
 	// Logger logs errors when accepting connections, unexpected behavior
 	// from handlers and underlying connection errors.
@@ -235,6 +235,7 @@ func (s *Server) serveConn(conn net.Conn) {
 		s.Logger.ErrorContext(ctx, "failed to flush greeting",
 			slog.Any("error", err),
 		)
+
 		return
 	}
 
@@ -261,7 +262,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		// Wait for a message to appear on the connection.
 		cmd, err := c.AwaitMessage()
-		if err != nil { // nolint:nestif // Needed.
+		if err != nil {
 			if errors.Is(err, os.ErrDeadlineExceeded) {
 				// We have reached the deadline for this session, we now need
 				// to disconnect.
@@ -309,6 +310,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					slog.Any("error", err),
 					slog.String("remote_addr", c.conn.RemoteAddr().String()),
 				)
+
 				return
 			}
 
@@ -356,6 +358,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					"failed to flush response, client has closed connection, connection reset by peer",
 					slog.Any("error", err),
 				)
+
 				return
 			}
 
@@ -440,7 +443,7 @@ type eppConn struct {
 	// causes AwaitMessage to return net.ErrClosed immediately when called.
 	stopAwaitMsg int32
 
-	maxMessageSize int64
+	maxMessageSize uint32
 }
 
 // AwaitMessage blocks until a message header is read from the underlying
