@@ -1,5 +1,7 @@
 # epp-lib
 
+**THIS REPO HAS BEEN ARCHIVED AND MOVED TO https://gitlab.com/internetstiftelsen-oss/epp-lib NO NEW UPDATES WILL BE PUSHED HERE**
+
 epp-lib is a library implementing an [EPP](https://datatracker.ietf.org/doc/html/rfc5730) server and some nice to haves around EPP.
 
 ## Server
