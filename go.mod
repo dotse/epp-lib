@@ -1,4 +1,4 @@
-module github.com/dotse/epp-lib
+module gitlab.com/internetstiftelsen-oss/epp-lib
 
 go 1.23
 
